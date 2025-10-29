@@ -1,0 +1,438 @@
+/* Genel ayarlar */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    background: var(--bg-color, #1e1e2f);
+    color: white;
+    overflow: hidden;
+    user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    gap: 50px;
+    align-items: flex-start;
+}
+
+.left {
+    text-align: center;
+}
+
+.left h2 {
+    margin-bottom: 20px;
+}
+
+.gem-container {
+    position: relative;
+    display: inline-block;
+}
+
+.gem {
+    width: 150px;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.gem:hover {
+    opacity: 0.9;
+}
+
+.gem:active {
+    transform: scale(1.05);
+    opacity: 0.8;
+}
+
+.right {
+    background: var(--right-panel-bg, #2c2c3e);
+    padding: 15px;
+    border-radius: 10px;
+    width: 300px;
+}
+
+.upgrade {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--upgrade-bg, #3a3a4f);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.upgrade-img {
+    width: 50px;
+}
+
+.upgrade-info p {
+    margin: 3px 0;
+    font-size: 14px;
+}
+
+.small-gem {
+    width: 15px;
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
+.buy-btn {
+    margin-left: auto;
+    padding: 5px 10px;
+    border: none;
+    background: #4CAF50;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.buy-btn:hover {
+    background: #45a049;
+}
+
+.miner-storage {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #555;
+    padding: 5px;
+    border-radius: 5px;
+    background: #1f1f30;
+}
+
+.miner-storage img {
+    width: 30px;
+    transition: transform 0.3s ease;
+}
+
+/* Toast mesaj */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    opacity: 0.9;
+    font-size: 14px;
+    z-index: 1000;
+    animation: fadeinout 3s forwards;
+}
+
+@keyframes fadeinout {
+    0% { opacity: 0; transform: translateY(20px);}
+    10% { opacity: 0.9; transform: translateY(0);}
+    90% { opacity: 0.9; transform: translateY(0);}
+    100% { opacity: 0; transform: translateY(20px);}
+}
+
+/* Gem pop animasyonu */
+.gem-pop {
+    position: absolute;
+    font-weight: bold;
+    font-size: 24px;
+    animation: pop 0.6s ease forwards;
+    pointer-events: none;
+    color: #FFD700;
+}
+
+@keyframes pop {
+    0% {opacity:1; transform: translateY(0) rotate(0deg);}
+    50% {opacity:1; transform: translateY(-30px) rotate(15deg);}
+    100% {opacity:0; transform: translateY(-60px) rotate(-15deg);}
+}
+
+/* Autoclicker efekti */
+body.autoclicker-active {
+    animation: rgbShift 1s infinite linear, shake 0.1s infinite;
+}
+
+@keyframes rgbShift {
+    0% { background-color: #ff0000; }
+    20% { background-color: #ff7f00; }
+    40% { background-color: #ffff00; }
+    60% { background-color: #00ff00; }
+    80% { background-color: #0000ff; }
+    100% { background-color: #8b00ff; }
+}
+
+@keyframes shake {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-5px, 5px); }
+    50% { transform: translate(5px, -5px); }
+    75% { transform: translate(-5px, 5px); }
+    100% { transform: translate(0, 0); }
+}
+
+/* Star animasyonu */
+.star {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    animation: starMove 1s linear forwards;
+}
+
+@keyframes starMove {
+    0% { opacity: 1; transform: translateY(0) scale(1);}
+    50% { opacity: 1; transform: translateY(-50px) scale(1.5);}
+    100% { opacity: 0; transform: translateY(-100px) scale(0);}
+}
+
+/* Battle ekranı */
+.battle-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    color: white;
+    text-align: center;
+    padding: 30px;
+    background-color: #2c2c3e;
+    border-radius: 10px;
+    width: 400px;
+    margin: 50px auto;
+}
+
+#attack-btn, #back-btn {
+    margin: 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#attack-btn {
+    background-color: #ff5722;
+    color: white;
+}
+
+#attack-btn:hover {
+    background-color: #e64a19;
+}
+
+#back-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#back-btn:hover {
+    background-color: #45a049;
+}
+
+#battle-log {
+    margin-top: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #555;
+    padding: 5px;
+    border-radius: 5px;
+    background: #1f1f30;
+}
+
+/* UI Menü ve Battle Butonu */
+.ui-top-menu {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.battle-btn, .settings-btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+}
+
+.battle-btn {
+    background: var(--button-primary, linear-gradient(135deg, #ff6b6b, #f06595));
+    color: white;
+}
+
+.battle-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+
+.settings-btn {
+    background: var(--button-settings, linear-gradient(135deg, #4dabf7, #1c7ed6));
+    color: white;
+}
+
+.settings-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+
+/* Ayarlar paneli */
+.settings-panel {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    width: 250px;
+    background: #2c2c3e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    display: none;
+    z-index: 1001;
+}
+
+.settings-panel h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #f1f1f1;
+}
+
+.settings-panel label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.settings-panel button {
+    padding: 8px 15px;
+    border: none;
+    background: #f06595;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.settings-panel button:hover {
+    background: #ff6b6b;
+}
+
+/* Temalar için değişkenler */
+body.theme1 {
+    --bg-color: #1e1e2f;
+    --right-panel-bg: #2c2c3e;
+    --upgrade-bg: #3a3a4f;
+    --button-primary: linear-gradient(135deg, #ff6b6b, #f06595);
+    --button-settings: linear-gradient(135deg, #4dabf7, #1c7ed6);
+}
+
+body.theme2 {
+    --bg-color: #0b3d91;
+    --right-panel-bg: #1c4a99;
+    --upgrade-bg: #2663bf;
+    --button-primary: linear-gradient(135deg, #ffb347, #ffcc33);
+    --button-settings: linear-gradient(135deg, #6a5acd, #836fff);
+}
+
+body.theme3 {
+    --bg-color: #003300;
+    --right-panel-bg: #004d00;
+    --upgrade-bg: #006600;
+    --button-primary: linear-gradient(135deg, #66ff66, #33cc33);
+    --button-settings: linear-gradient(135deg, #99ff99, #66cc66);
+}
+
+body.theme4 {
+    --bg-color: #2b1b17;
+    --right-panel-bg: #3a2a22;
+    --upgrade-bg: #5c3a2f;
+    --button-primary: linear-gradient(135deg, #ff9966, #ff5e62);
+    --button-settings: linear-gradient(135deg, #ffcc99, #ff9966);
+}
+
+body.theme5 {
+    --bg-color: #1a1a40;
+    --right-panel-bg: #2c2c6c;
+    --upgrade-bg: #40409a;
+    --button-primary: linear-gradient(135deg, #ff6ec7, #ff8ef7);
+    --button-settings: linear-gradient(135deg, #6ed0ff, #4dabf7);
+}
+
+/* Body ve paneller temaya göre */
+body {
+    background: var(--bg-color);
+}
+
+.right {
+    background: var(--right-panel-bg);
+}
+
+.upgrade {
+    background: var(--upgrade-bg);
+}
+
+.battle-btn {
+    background: var(--button-primary);
+}
+
+.settings-btn {
+    background: var(--button-settings);
+}
+
+/* Krallık ismi sol üst */
+.kingdom-name-container {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffd700;
+    z-index: 1000;
+}
+
+/* Ayarlar panelindeki tema butonları hizası */
+.theme-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 5px;
+}
+
+.theme-buttons button {
+    flex: 1 1 auto;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: none;
+    background: #4dabf7;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.theme-buttons button:hover {
+    background: #339af0;
+}
+
+/* Ayarlar paneli input ve buton */
+#kingdom-input {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    margin-right: 5px;
+}
+
+#kingdom-input + button {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: none;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+}
