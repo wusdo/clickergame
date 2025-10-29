@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crazy Clicker Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme1">
+    <!-- Krallık ismi sol üstte -->
+    <div class="kingdom-name-container">
+        <span id="kingdom-name">My Kingdom</span>
+    </div>
+
+    <!-- Üst Sağ Menü -->
+    <div class="ui-top-menu">
+        <button class="battle-btn" id="battle-btn">Go to Battle</button>
+        <button class="settings-btn" onclick="toggleSettings()">Settings</button>
+    </div>
+
+    <div class="container">
+        <!-- Sol taraf: Gem ve sayı -->
+        <div class="left">
+            <h2>Gems: <span class="gem-count">0</span></h2>
+            <div class="gem-container">
+                <img src="assets/gem.svg" alt="Gem" class="gem" draggable="false">
+            </div>
+            <p>🛡️ My Army: <span id="myArmy">0</span></p>
+
+        </div>
+
+        <!-- Sağ taraf: Upgradeler ve Auto Minerlar -->
+        <div class="right">
+            <h3>Upgrades</h3>
+
+            <div class="upgrade" data-type="clicker">
+                <img src="assets/click.svg" class="upgrade-img" alt="Clicker">
+                <div class="upgrade-info">
+                    <p>Clicker Level: <span class="upgrade-level">0</span></p>
+                    <p>Cost: <span class="upgrade-cost">10</span> <img src="assets/gem.svg" class="small-gem"></p>
+                </div>
+                <button class="buy-btn">Buy</button>
+            </div>
+
+            <div class="upgrade" data-type="auto">
+                <img src="assets/miner.svg" class="upgrade-img" alt="Auto Miner">
+                <div class="upgrade-info">
+                    <p>Auto Miner Level: <span class="upgrade-level">0</span></p>
+                    <p>Cost: <span class="upgrade-cost">50</span> <img src="assets/gem.svg" class="small-gem"></p>
+                </div>
+                <button class="buy-btn">Buy</button>
+            </div>
+
+            <div class="upgrade" data-type="super-clicker">
+                <img src="assets/superclick.svg" class="upgrade-img" alt="Super Clicker">
+                <div class="upgrade-info">
+                    <p>Super Clicker Level: <span class="upgrade-level">0</span></p>
+                    <p>Cost: <span class="upgrade-cost">100</span> <img src="assets/gem.svg" class="small-gem"></p>
+                </div>
+                <button class="buy-btn">Buy</button>
+            </div>
+
+            <h3>Auto Miners Collected</h3>
+            <div class="miner-storage"></div>
+        </div>
+    </div>
+
+    <!-- Ayarlar Paneli -->
+    <div class="settings-panel" id="settingsPanel">
+        <h3>Settings</h3>
+
+        <label>
+            Kingdom Name:
+            <input type="text" id="kingdom-input" placeholder="Enter kingdom name">
+            <button id="set-kingdom">Set</button>
+        </label>
+
+        <label>
+            <input type="checkbox" id="soundToggle" checked>
+            Sound Effects
+        </label>
+
+        <label>
+            <input type="checkbox" id="autoClickToggle">
+            Auto Clicker On Start
+        </label>
+
+        <div class="theme-selection">
+            <p>Choose Theme:</p>
+            <div class="theme-buttons">
+                <button onclick="changeTheme('theme1')">Theme 1</button>
+                <button onclick="changeTheme('theme2')">Theme 2</button>
+                <button onclick="changeTheme('theme3')">Theme 3</button>
+                <button onclick="changeTheme('theme4')">Theme 4</button>
+                <button onclick="changeTheme('theme5')">Theme 5</button>
+            </div>
+        </div>
+
+        <button onclick="closeSettings()">Close</button>
+    </div>
+    <!-- <script src="game-sync.js"></script> -->
+    <script src="index.js"></script>
+</body>
+</html>

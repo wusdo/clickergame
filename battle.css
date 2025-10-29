@@ -1,0 +1,38 @@
+body {margin:0; padding:0; font-family:sans-serif; background:#1e1e2f; color:white;}
+.kingdom-name-container{position:fixed; top:20px; left:20px; font-size:20px; font-weight:bold; color:#ffd700; z-index:1000;}
+#back-btn{position:fixed; top:20px; right:20px; padding:10px 18px; border:none; border-radius:8px; background:linear-gradient(135deg,#4dabf7,#1c7ed6); color:white; font-weight:bold; cursor:pointer; z-index:1000;}
+#back-btn:hover{transform:translateY(-2px);}
+
+/* Army Panel Toggle */
+.army-panel-toggle{position:fixed; top:70px; left:20px; z-index:1000; display:flex; gap:5px;}
+.army-panel-toggle button{padding:10px 20px; background:#0a3d91; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; transition:0.3s;}
+.army-panel-toggle button:hover{background:#3b82f6;}
+
+/* Warrior Panels */
+.warrior-panels{margin-top:150px; display:flex; flex-direction:column; gap:10px; width:60%; max-width:700px; margin-left:auto; margin-right:auto;}
+
+/* Battle Field */
+.battle-field{display:flex; justify-content:space-around; align-items:center; padding:10px; background:#1f1f30; border:2px solid #555; border-radius:8px;}
+.player, .enemy{display:flex; flex-direction:column; align-items:center; text-align:center; width:40%;}
+.player-img, .enemy-img{width:70px; height:70px; object-fit:contain;}
+.hp-bar{width:90px; height:12px; background:#555; border-radius:6px; margin:5px 0; overflow:hidden;}
+.hp-fill{height:100%; background:#4CAF50; transition:width 0.3s;}
+.gold-icon{width:16px; height:16px; vertical-align:middle; margin-left:3px;}
+
+/* Upgrade Buttons */
+.upgrade-panel{display:flex; gap:10px; justify-content:center; margin-top:15px;}
+.upgrade-btn{padding:8px 15px; background:linear-gradient(135deg,#f0a500,#ffdd00); border:none; border-radius:6px; color:#1e1e2f; font-weight:bold; cursor:pointer; transition:0.3s;}
+.upgrade-btn:hover{background:linear-gradient(135deg,#ffdd00,#f0a500); transform:translateY(-2px);}
+
+/* Auto Attack Fixed */
+.auto-attack-fixed{position:fixed; top:120px; right:20px; z-index:1000;}
+.auto-attack-fixed button{padding:10px 15px; background:#ff6b6b; border:none; color:white; font-weight:bold; cursor:pointer; border-radius:6px; transition:0.3s;}
+.auto-attack-fixed button:hover{background:#ff8787; transform:translateY(-2px);}
+
+/* Battle Log */
+#battle-log{margin-top:15px; max-height:200px; overflow-y:auto; border:1px solid #555; padding:10px; border-radius:5px; background:#1f1f30; width:90%; max-width:680px; margin-left:auto; margin-right:auto;}
+#battle-log p.player-log{text-align:left; color:#4af;}
+#battle-log p.enemy-log{text-align:right; color:#f55;}
+
+/* Gem Display */
+#gem-display{position:fixed; bottom:20px; left:20px; font-size:16px; font-weight:bold; color:#ffd700;}
