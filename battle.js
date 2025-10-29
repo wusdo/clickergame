@@ -1,46 +1,91 @@
 // ======= Cross-Tab Synchronization System =======
-const gameChannel = new BroadcastChannel('clicker-game-sync');
+let gameChannel;
+try {
+    gameChannel = new BroadcastChannel('clicker-game-sync');
+} catch (e) {
+    console.log("BroadcastChannel not supported, using fallback");
+    gameChannel = { postMessage: () => {}, onmessage: null };
+}
+
+// Safe number getter
+function getNumber(key, defaultValue = 0) {
+    const value = localStorage.getItem(key);
+    if (value === null || value === undefined || value === "null" || value === "undefined") {
+        return defaultValue;
+    }
+    const parsed = parseInt(value);
+    return isNaN(parsed) ? defaultValue : parsed;
+}
 
 // Player verisi index.html'den alınır
-let playerGems = parseInt(localStorage.getItem("playerGems")) || 0;
+let playerGems = getNumber("playerGems", 0);
 let kingdomName = localStorage.getItem("kingdomName") || "My Kingdom";
-let myArmy = parseInt(localStorage.getItem("myArmy")) || 0;
-let autoMinerLevel = parseInt(localStorage.getItem("autoMinerLevel")) || 0;
+let myArmy = getNumber("myArmy", 0);
+let autoMinerLevel = getNumber("autoMinerLevel", 0);
 let autoAttackActive = (localStorage.getItem("autoAttackActive") === "true") || false;
 
-document.getElementById("kingdom-name").textContent = kingdomName;
-document.getElementById("battle-gems").textContent = playerGems;
+const kingdomNameElement = document.getElementById("kingdom-name");
+const battleGemsElement = document.getElementById("battle-gems");
+
+if (kingdomNameElement) kingdomNameElement.textContent = kingdomName;
+if (battleGemsElement) battleGemsElement.textContent = playerGems;
 
 // ======= Sync listeners for other tabs =======
-gameChannel.onmessage = (event) => {
-    if (event.data.type === 'state-update') {
-        playerGems = event.data.gemCount;
-        myArmy = event.data.myArmy;
-        autoMinerLevel = event.data.autoMinerLevel;
-        
-        document.getElementById("battle-gems").textContent = playerGems;
+if (gameChannel && gameChannel.addEventListener) {
+    gameChannel.addEventListener('message', (event) => {
+        if (event.data.type === 'state-update') {
+            playerGems = event.data.gemCount || 0;
+            myArmy = event.data.myArmy || 0;
+            autoMinerLevel = event.data.autoMinerLevel || 0;
+            
+            if (battleGemsElement) battleGemsElement.textContent = playerGems;
+        }
+    });
+} else if (gameChannel) {
+    gameChannel.onmessage = (event) => {
+        if (event.data.type === 'state-update') {
+            playerGems = event.data.gemCount || 0;
+            myArmy = event.data.myArmy || 0;
+            autoMinerLevel = event.data.autoMinerLevel || 0;
+            
+            if (battleGemsElement) battleGemsElement.textContent = playerGems;
+        }
+    };
+}
+
+// Storage event listener for cross-tab sync
+window.addEventListener('storage', (e) => {
+    if (e.key === 'playerGems') {
+        playerGems = getNumber("playerGems", 0);
+        if (battleGemsElement) battleGemsElement.textContent = playerGems;
     }
-};
+});
 
 // ======= Broadcast state to other tabs =======
 function broadcastState() {
-    gameChannel.postMessage({
-        type: 'state-update',
-        gemCount: playerGems,
-        clickPower: parseInt(localStorage.getItem("clickPower")) || 1,
-        clickerLevel: parseInt(localStorage.getItem("clickerLevel")) || 0,
-        autoMinerLevel: autoMinerLevel,
-        superClickerLevel: parseInt(localStorage.getItem("superClickerLevel")) || 0,
-        myArmy: myArmy
-    });
+    try {
+        if (gameChannel && gameChannel.postMessage) {
+            gameChannel.postMessage({
+                type: 'state-update',
+                gemCount: playerGems,
+                clickPower: getNumber("clickPower", 1),
+                clickerLevel: getNumber("clickerLevel", 0),
+                autoMinerLevel: autoMinerLevel,
+                superClickerLevel: getNumber("superClickerLevel", 0),
+                myArmy: myArmy
+            });
+        }
+    } catch (e) {
+        console.log("Could not broadcast state");
+    }
 }
 
 // ======= Auto earn gems from miners (works in background) =======
 setInterval(() => {
     if (autoMinerLevel > 0) {
         playerGems += autoMinerLevel;
-        localStorage.setItem("playerGems", playerGems);
-        document.getElementById("battle-gems").textContent = playerGems;
+        localStorage.setItem("playerGems", playerGems.toString());
+        if (battleGemsElement) battleGemsElement.textContent = playerGems;
         broadcastState();
     }
 }, 1000);
@@ -55,51 +100,65 @@ const warriorData = {};
 
 // ======= Load warrior data from localStorage =======
 function loadWarriors() {
-    const savedWarriors = localStorage.getItem("warriorData");
-    const savedCount = localStorage.getItem("warriorCount");
-    
-    if (savedWarriors && savedCount) {
-        warriorCount = parseInt(savedCount);
-        const parsedData = JSON.parse(savedWarriors);
+    try {
+        const savedWarriors = localStorage.getItem("warriorData");
+        const savedCount = localStorage.getItem("warriorCount");
         
-        // Restore all warriors
-        for (let i = 1; i <= warriorCount; i++) {
-            if (parsedData[i]) {
-                warriorData[i] = parsedData[i];
-                createWarriorPanel(i);
+        if (savedWarriors && savedCount) {
+            warriorCount = parseInt(savedCount) || 0;
+            const parsedData = JSON.parse(savedWarriors);
+            
+            // Restore all warriors
+            for (let i = 1; i <= warriorCount; i++) {
+                if (parsedData[i]) {
+                    warriorData[i] = parsedData[i];
+                    createWarriorPanel(i);
+                }
             }
         }
+    } catch (e) {
+        console.error("Could not load warriors:", e);
     }
 }
 
 // ======= Save warrior data to localStorage =======
 function saveWarriors() {
-    localStorage.setItem("warriorData", JSON.stringify(warriorData));
-    localStorage.setItem("warriorCount", warriorCount);
+    try {
+        localStorage.setItem("warriorData", JSON.stringify(warriorData));
+        localStorage.setItem("warriorCount", warriorCount.toString());
+    } catch (e) {
+        console.error("Could not save warriors:", e);
+    }
 }
 
 // ======= Create warrior panel (for both new and loaded warriors) =======
 function createWarriorPanel(n) {
+    if (!warriorPanels) return;
+    
     const data = warriorData[n];
+    if (!data) return;
     
     // Check if panel already exists
     if (document.getElementById(`warrior-${n}-field`)) {
         return;
     }
     
+    const playerHpPercent = (data.playerHP / data.playerMaxHP * 100);
+    const enemyHpPercent = (data.enemyHP / data.enemyMaxHP * 100);
+    
     const div = document.createElement("div");
     div.className = "battle-field";
     div.id = `warrior-${n}-field`;
     div.innerHTML = `
         <div class="player">
-            <img src="assets/player.svg" class="player-img" alt="Player">
-            <div class="hp-bar"><div class="hp-fill" id="player${n}-hp" style="width: ${(data.playerHP/data.playerMaxHP*100)}%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div></div>
+            <img src="assets/player.svg" class="player-img" alt="Player" onerror="this.style.display='none'">
+            <div class="hp-bar"><div class="hp-fill" id="player${n}-hp" style="width: ${playerHpPercent}%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div></div>
             <p>Strength: <span id="player${n}-strength">${data.playerStrength}</span></p>
         </div>
         <div class="enemy">
-            <img src="assets/enemy.svg" class="enemy-img" alt="Enemy">
-            <div class="hp-bar"><div class="hp-fill" id="enemy${n}-hp" style="width: ${(data.enemyHP/data.enemyMaxHP*100)}%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div></div>
-            <p id="enemy${n}-name">${data.currentEnemy} (Lv${data.enemyLevel}) <img src="assets/gold.svg" class="gold-icon" alt="Gold"> ${data.enemyGold}</p>
+            <img src="assets/enemy.svg" class="enemy-img" alt="Enemy" onerror="this.style.display='none'">
+            <div class="hp-bar"><div class="hp-fill" id="enemy${n}-hp" style="width: ${enemyHpPercent}%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div></div>
+            <p id="enemy${n}-name">${data.currentEnemy} (Lv${data.enemyLevel}) 💰 ${data.enemyGold}</p>
         </div>
     `;
     warriorPanels.appendChild(div);
@@ -115,9 +174,9 @@ function addWarrior() {
     if (playerGems >= warriorCost) {
         playerGems -= warriorCost;
         myArmy++;
-        localStorage.setItem("playerGems", playerGems);
-        localStorage.setItem("myArmy", myArmy);
-        document.getElementById("battle-gems").textContent = playerGems;
+        localStorage.setItem("playerGems", playerGems.toString());
+        localStorage.setItem("myArmy", myArmy.toString());
+        if (battleGemsElement) battleGemsElement.textContent = playerGems;
         broadcastState();
         
         warriorCount++;
@@ -165,8 +224,8 @@ function attack(warrior) {
 
     if (data.enemyHP === 0) {
         playerGems += data.enemyGold;
-        document.getElementById("battle-gems").textContent = playerGems;
-        localStorage.setItem("playerGems", playerGems);
+        if (battleGemsElement) battleGemsElement.textContent = playerGems;
+        localStorage.setItem("playerGems", playerGems.toString());
         broadcastState();
 
         levelUpEnemy(warrior);
@@ -180,6 +239,8 @@ function attack(warrior) {
 // Enemy saldırısı
 function enemyAttack(warrior) {
     const data = warriorData[warrior];
+    if (!data) return;
+    
     const dmg = Math.floor(Math.random() * 10 + 5);
     data.playerHP -= dmg;
     if (data.playerHP < 0) data.playerHP = 0;
@@ -200,6 +261,8 @@ function enemyAttack(warrior) {
 // Enemy reset ve seviye artışı
 function levelUpEnemy(warrior) {
     const data = warriorData[warrior];
+    if (!data) return;
+    
     data.enemyLevel++;
     data.enemyMaxHP += 10; 
     data.enemyHP = data.enemyMaxHP;
@@ -213,7 +276,7 @@ function levelUpEnemy(warrior) {
     
     const enemyName = document.getElementById(`enemy${warrior}-name`);
     if (enemyName) {
-        enemyName.innerHTML = `${data.currentEnemy} (Lv${data.enemyLevel}) <img src="assets/gold.svg" class="gold-icon" alt="Gold"> ${data.enemyGold}`;
+        enemyName.textContent = `${data.currentEnemy} (Lv${data.enemyLevel}) 💰 ${data.enemyGold}`;
     }
 }
 
@@ -221,7 +284,7 @@ function levelUpEnemy(warrior) {
 function backgroundAutoAttack() {
     if (!autoAttackActive) return;
     
-    const lastBattleTime = parseInt(localStorage.getItem("lastBattleTime")) || Date.now();
+    const lastBattleTime = getNumber("lastBattleTime", Date.now());
     const currentTime = Date.now();
     const timeAway = Math.floor((currentTime - lastBattleTime) / 1000); // seconds
     
@@ -233,21 +296,21 @@ function backgroundAutoAttack() {
         
         if (offlineGems > 0) {
             playerGems += offlineGems;
-            localStorage.setItem("playerGems", playerGems);
-            document.getElementById("battle-gems").textContent = playerGems;
+            localStorage.setItem("playerGems", playerGems.toString());
+            if (battleGemsElement) battleGemsElement.textContent = playerGems;
             broadcastState();
             
             showToast(`Warriors earned ${offlineGems} gems while you were away!`);
         }
     }
     
-    localStorage.setItem("lastBattleTime", Date.now());
+    localStorage.setItem("lastBattleTime", Date.now().toString());
 }
 
 // Update last battle time periodically
 setInterval(() => {
     if (autoAttackActive) {
-        localStorage.setItem("lastBattleTime", Date.now());
+        localStorage.setItem("lastBattleTime", Date.now().toString());
     }
 }, 5000);
 
@@ -278,60 +341,73 @@ function showToast(message) {
 }
 
 // Auto attack
-document.getElementById("auto-attack-btn").addEventListener("click", () => {
-    if (autoAttackInterval) {
-        clearInterval(autoAttackInterval);
-        autoAttackInterval = null;
-        autoAttackActive = false;
-        localStorage.setItem("autoAttackActive", "false");
-        document.getElementById("auto-attack-btn").textContent = "Auto Attack";
-        showToast("Auto Attack stopped");
-    } else {
-        if (warriorCount === 0) {
-            showToast("Add warriors first!");
-            return;
-        }
-        autoAttackActive = true;
-        localStorage.setItem("autoAttackActive", "true");
-        localStorage.setItem("lastBattleTime", Date.now());
-        
-        autoAttackInterval = setInterval(() => {
-            for (let i = 1; i <= warriorCount; i++) {
-                if (warriorData[i]) {
-                    attack(i);
-                }
+const autoAttackBtn = document.getElementById("auto-attack-btn");
+if (autoAttackBtn) {
+    autoAttackBtn.addEventListener("click", () => {
+        if (autoAttackInterval) {
+            clearInterval(autoAttackInterval);
+            autoAttackInterval = null;
+            autoAttackActive = false;
+            localStorage.setItem("autoAttackActive", "false");
+            autoAttackBtn.textContent = "Auto Attack";
+            showToast("Auto Attack stopped");
+        } else {
+            if (warriorCount === 0) {
+                showToast("Add warriors first!");
+                return;
             }
-        }, 200); 
-        document.getElementById("auto-attack-btn").textContent = "Stop Auto Attack";
-        showToast("Auto Attack activated - Warriors will fight even when you leave!");
-    }
-});
+            autoAttackActive = true;
+            localStorage.setItem("autoAttackActive", "true");
+            localStorage.setItem("lastBattleTime", Date.now().toString());
+            
+            autoAttackInterval = setInterval(() => {
+                for (let i = 1; i <= warriorCount; i++) {
+                    if (warriorData[i]) {
+                        attack(i);
+                    }
+                }
+            }, 200); 
+            autoAttackBtn.textContent = "Stop Auto Attack";
+            showToast("Auto Attack activated - Warriors will fight even when you leave!");
+        }
+    });
+}
 
 // +1 Warrior butonu
-addBtn.addEventListener("click", addWarrior);
+if (addBtn) {
+    addBtn.addEventListener("click", addWarrior);
+}
 
 // Back to clicker
-document.getElementById("back-btn").addEventListener("click", () => {
-    saveWarriors();
-    localStorage.setItem("playerGems", playerGems);
-    window.location.href = "index.html";
-});
+const backBtn = document.getElementById("back-btn");
+if (backBtn) {
+    backBtn.addEventListener("click", () => {
+        saveWarriors();
+        localStorage.setItem("playerGems", playerGems.toString());
+        window.location.href = "index.html";
+    });
+}
 
 // Army panel toggle
 const armyBtn = document.getElementById("army-btn");
 const warriorPanelsDiv = document.querySelector(".warrior-panels");
-warriorPanelsDiv.style.display = "none";
 
-armyBtn.addEventListener("click", () => {
-    if (warriorPanelsDiv.style.display === "none") {
-        warriorPanelsDiv.style.display = "flex";
-        if (warriorCount === 0) {
-            showToast("Click '+1 Warrior' to add warriors to your army!");
+if (warriorPanelsDiv) {
+    warriorPanelsDiv.style.display = "none";
+}
+
+if (armyBtn && warriorPanelsDiv) {
+    armyBtn.addEventListener("click", () => {
+        if (warriorPanelsDiv.style.display === "none") {
+            warriorPanelsDiv.style.display = "flex";
+            if (warriorCount === 0) {
+                showToast("Click '+1 Warrior' to add warriors to your army!");
+            }
+        } else {
+            warriorPanelsDiv.style.display = "none";
         }
-    } else {
-        warriorPanelsDiv.style.display = "none";
-    }
-});
+    });
+}
 
 // ======= Initialize on page load =======
 window.addEventListener("load", () => {
@@ -342,7 +418,7 @@ window.addEventListener("load", () => {
     backgroundAutoAttack();
     
     // Resume auto-attack if it was active
-    if (autoAttackActive && warriorCount > 0) {
+    if (autoAttackActive && warriorCount > 0 && autoAttackBtn) {
         autoAttackInterval = setInterval(() => {
             for (let i = 1; i <= warriorCount; i++) {
                 if (warriorData[i]) {
@@ -350,6 +426,6 @@ window.addEventListener("load", () => {
                 }
             }
         }, 200);
-        document.getElementById("auto-attack-btn").textContent = "Stop Auto Attack";
+        autoAttackBtn.textContent = "Stop Auto Attack";
     }
 });
