@@ -1,6 +1,7 @@
-// Player verisi index.html’den alınır
+// Player verisi index.html'den alınır
 let playerGems = parseInt(localStorage.getItem("playerGems")) || 0;
 let kingdomName = localStorage.getItem("kingdomName") || "My Kingdom";
+let myArmy = parseInt(localStorage.getItem("myArmy")) || 0;
 document.getElementById("kingdom-name").textContent = kingdomName;
 document.getElementById("battle-gems").textContent = playerGems;
 
@@ -16,6 +17,8 @@ const warriorData = {};
 // Yeni warrior ekleme
 function addWarrior() {
     warriorCount++;
+    myArmy++;
+    localStorage.setItem("myArmy", myArmy);
     const n = warriorCount;
 
     // Başlangıç değerleri
@@ -123,7 +126,7 @@ function appendLog(text, type) {
     p.textContent = text;
     p.className = type === "player" ? "player-log" : "enemy-log";
     battleLog.appendChild(p);
-    battleLog.scrollTop = battleLog.scrollHeight; // scroll en alta
+    battleLog.scrollTop = battleLog.scrollHeight;
 }
 
 // Auto attack
@@ -144,17 +147,53 @@ document.getElementById("auto-attack-btn").addEventListener("click", () => {
     }
 });
 
-
-
 // +1 Warrior butonu
 addBtn.addEventListener("click", addWarrior);
 
-// Başlangıçta 1 warrior
-addWarrior();
+// Başlangıçta mevcut ordun varsa, onları yükle
+if(myArmy === 0) {
+    addWarrior();
+} else {
+    for(let i = 0; i < myArmy; i++) {
+        const n = i + 1;
+        warriorCount = n;
+        warriorData[n] = {
+            playerHP: 120,
+            playerMaxHP: 120,
+            playerStrength: 15,
+            enemyHP: 50,
+            enemyMaxHP: 50,
+            enemyGold: 15,
+            enemyLevel: 1,
+            currentEnemy: enemyNames[Math.floor(Math.random() * enemyNames.length)]
+        };
+        
+        const div = document.createElement("div");
+        div.className = "battle-field";
+        div.id = `warrior-${n}-field`;
+        div.innerHTML = `
+            <div class="player">
+                <img src="assets/player.svg" class="player-img">
+                <div class="hp-bar"><div class="hp-fill" id="player${n}-hp"></div></div>
+                <p>Strength: <span id="player${n}-strength">${warriorData[n].playerStrength}</span></p>
+            </div>
+            <div class="enemy">
+                <img src="assets/enemy.svg" class="enemy-img">
+                <div class="hp-bar"><div class="hp-fill" id="enemy${n}-hp"></div></div>
+                <p id="enemy${n}-name">${warriorData[n].currentEnemy} (Lv1) <img src="assets/gold.svg" class="gold-icon"> ${warriorData[n].enemyGold}</p>
+            </div>
+        `;
+        warriorPanels.appendChild(div);
+        document.getElementById(`player${n}-hp`).style.width = "100%";
+        document.getElementById(`enemy${n}-hp`).style.width = "100%";
+        div.addEventListener("click", () => attack(n));
+    }
+}
 
 // Back to clicker
 document.getElementById("back-btn").addEventListener("click", () => {
     localStorage.setItem("playerGems", playerGems);
+    localStorage.setItem("myArmy", myArmy);
     window.location.href = "index.html";
 });
 

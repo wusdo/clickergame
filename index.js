@@ -1,29 +1,11 @@
-// ======= Cross-Tab Synchronization System =======
-let gameChannel;
-try {
-    gameChannel = new BroadcastChannel('clicker-game-sync');
-} catch (e) {
-    console.log("BroadcastChannel not supported, using fallback");
-    gameChannel = { postMessage: () => {}, onmessage: null };
-}
-
 // ======= Oyun değişkenleri ve localStorage yükleme =======
-function getNumber(key, defaultValue = 0) {
-    const value = localStorage.getItem(key);
-    if (value === null || value === undefined || value === "null" || value === "undefined") {
-        return defaultValue;
-    }
-    const parsed = parseInt(value);
-    return isNaN(parsed) ? defaultValue : parsed;
-}
-
-let gemCount = getNumber("playerGems", 0);
-let clickPower = getNumber("clickPower", 1);
-let clickerLevel = getNumber("clickerLevel", 0);
-let autoMinerLevel = getNumber("autoMinerLevel", 0);
-let superClickerLevel = getNumber("superClickerLevel", 0);
-let myArmy = getNumber("myArmy", 0);
-let autoMinerPower = 1;
+let gemCount = parseInt(localStorage.getItem("playerGems")) ?? 0;
+let clickPower = parseInt(localStorage.getItem("clickPower")) ?? 1;
+let clickerLevel = parseInt(localStorage.getItem("clickerLevel")) ?? 0;
+let autoMinerLevel = parseInt(localStorage.getItem("autoMinerLevel")) ?? 0;
+let superClickerLevel = parseInt(localStorage.getItem("superClickerLevel")) ?? 0;
+let myArmy = parseInt(localStorage.getItem("myArmy")) ?? 0;
+let autoMinerPower = 1; // Her auto miner saniyede 1 gem kazandırır
 
 // Autoclicker değişkenleri
 let autoClickerActive = false;
@@ -39,87 +21,6 @@ const gemContainer = document.querySelector(".gem-container");
 const upgrades = document.querySelectorAll(".upgrade");
 const minerStorage = document.querySelector(".miner-storage");
 
-// ======= Sync listeners for other tabs =======
-if (gameChannel && gameChannel.addEventListener) {
-    gameChannel.addEventListener('message', (event) => {
-        if (event.data.type === 'state-update') {
-            gemCount = event.data.gemCount || 0;
-            clickPower = event.data.clickPower || 1;
-            clickerLevel = event.data.clickerLevel || 0;
-            autoMinerLevel = event.data.autoMinerLevel || 0;
-            superClickerLevel = event.data.superClickerLevel || 0;
-            myArmy = event.data.myArmy || 0;
-            
-            updateUI();
-        }
-    });
-} else if (gameChannel) {
-    gameChannel.onmessage = (event) => {
-        if (event.data.type === 'state-update') {
-            gemCount = event.data.gemCount || 0;
-            clickPower = event.data.clickPower || 1;
-            clickerLevel = event.data.clickerLevel || 0;
-            autoMinerLevel = event.data.autoMinerLevel || 0;
-            superClickerLevel = event.data.superClickerLevel || 0;
-            myArmy = event.data.myArmy || 0;
-            
-            updateUI();
-        }
-    };
-}
-
-// Storage event listener for cross-tab sync (fallback)
-window.addEventListener('storage', (e) => {
-    if (e.key === 'playerGems') {
-        gemCount = getNumber("playerGems", 0);
-        updateUI();
-    }
-});
-
-function updateUI() {
-    if (gemDisplay) gemDisplay.textContent = gemCount;
-    
-    const myArmyElement = document.getElementById("myArmy");
-    if (myArmyElement) {
-        myArmyElement.textContent = myArmy;
-    }
-    
-    const kingdomNameElement = document.getElementById("kingdom-name");
-    if (kingdomNameElement) {
-        const savedName = localStorage.getItem("kingdomName");
-        if (savedName) kingdomNameElement.textContent = savedName;
-    }
-    
-    upgrades.forEach(upgrade => {
-        const type = upgrade.dataset.type;
-        const levelSpan = upgrade.querySelector(".upgrade-level");
-        if (!levelSpan) return;
-        
-        if(type === "clicker") levelSpan.textContent = clickerLevel;
-        if(type === "auto") levelSpan.textContent = autoMinerLevel;
-        if(type === "super-clicker") levelSpan.textContent = superClickerLevel;
-    });
-}
-
-// ======= Broadcast state to other tabs =======
-function broadcastState() {
-    try {
-        if (gameChannel && gameChannel.postMessage) {
-            gameChannel.postMessage({
-                type: 'state-update',
-                gemCount: gemCount,
-                clickPower: clickPower,
-                clickerLevel: clickerLevel,
-                autoMinerLevel: autoMinerLevel,
-                superClickerLevel: superClickerLevel,
-                myArmy: myArmy
-            });
-        }
-    } catch (e) {
-        console.log("Could not broadcast state");
-    }
-}
-
 // ======= Mouse pozisyonu =======
 document.addEventListener("mousemove", (e) => {
     mouseX = e.clientX;
@@ -127,25 +28,19 @@ document.addEventListener("mousemove", (e) => {
 });
 
 // ======= Gem tıklama =======
-if (gem) {
-    gem.addEventListener("click", (e) => {
-        addGems(clickPower, e);
-    });
-}
+gem.addEventListener("click", (e) => {
+    addGems(clickPower, e);
+});
 
 // ======= Upgrade satın alma =======
 upgrades.forEach(upgrade => {
     const btn = upgrade.querySelector(".buy-btn");
-    if (!btn) return;
-    
     btn.addEventListener("click", () => {
         const type = upgrade.dataset.type;
         let levelSpan = upgrade.querySelector(".upgrade-level");
         let costSpan = upgrade.querySelector(".upgrade-cost");
-        if (!levelSpan || !costSpan) return;
-        
-        let level = parseInt(levelSpan.textContent) || 0;
-        let cost = parseInt(costSpan.textContent) || 0;
+        let level = parseInt(levelSpan.textContent);
+        let cost = parseInt(costSpan.textContent);
 
         if (gemCount >= cost) {
             gemCount -= cost;
@@ -171,7 +66,7 @@ upgrades.forEach(upgrade => {
             }
 
             saveGame();
-            if (gemDisplay) gemDisplay.textContent = gemCount;
+            gemDisplay.textContent = gemCount;
             createStar(mouseX, mouseY);
             scatterUpgradeGems();
         } else {
@@ -182,7 +77,7 @@ upgrades.forEach(upgrade => {
 
 // ======= Auto Miner interval =======
 minerAutoInterval = setInterval(() => {
-    if(autoMinerLevel > 0 && minerStorage){
+    if(autoMinerLevel > 0){
         for(let i=0;i<autoMinerLevel;i++){
             let minerImgs = minerStorage.querySelectorAll("img");
             if(minerImgs[i]){
@@ -204,15 +99,12 @@ function addGems(amount, e=null){
 
 // Gem tıklama animasyonu
 function animateGem() {
-    if (!gem) return;
     gem.style.transform = "scale(1.1)";
     setTimeout(() => gem.style.transform = "scale(1)", 100);
 }
 
 // Gem pop animasyonu
 function animateGemPop(amount, e){
-    if (!gemContainer) return;
-    
     const pop = document.createElement("div");
     pop.textContent = `+${amount}`;
     pop.className = "gem-pop";
@@ -225,7 +117,6 @@ function animateGemPop(amount, e){
 
     gemContainer.appendChild(pop);
 
-    if (!gem) return;
     const rect = gem.getBoundingClientRect();
     let left = rect.width/2 - 10;
     let top = rect.height/2 - 20;
@@ -246,15 +137,13 @@ function animateGemPop(amount, e){
 
 // Gem sayısı animasyonu
 function animateGemNumber(amount){
-    if (!gemDisplay) return;
-    
     let step = 0;
     const interval = setInterval(() => {
         if(step >= amount){
             clearInterval(interval);
             gemDisplay.textContent = gemCount;
         } else {
-            gemDisplay.textContent = (parseInt(gemDisplay.textContent) || 0) + 1;
+            gemDisplay.textContent = parseInt(gemDisplay.textContent)+1;
             step++;
         }
     }, 10);
@@ -317,8 +206,6 @@ function createStar(x, y){
 
 // ======= Miner görseli ekleme =======
 function addMinerVisual(){
-    if (!minerStorage) return;
-    
     const minerImg = document.createElement("img");
     minerImg.src = "assets/miner.svg";
     minerImg.style.transform = "scale(0)";
@@ -338,93 +225,72 @@ function scatterUpgradeGems(){
 
 // ======= Battle sayfasına geçiş =======
 const battleBtn = document.getElementById("battle-btn");
-if (battleBtn) {
-    battleBtn.addEventListener("click", () => {
-        saveGame();
-        window.location.href = "battle.html";
-    });
-}
+battleBtn.addEventListener("click", () => {
+    saveGame();
+    window.location.href = "battle.html";
+});
 
 // ======= Ayarlar paneli =======
 function toggleSettings() {
     const panel = document.getElementById("settingsPanel");
-    if (panel) {
-        panel.style.display = (panel.style.display === "block") ? "none" : "block";
-    }
+    panel.style.display = (panel.style.display === "block") ? "none" : "block";
 }
 
 function closeSettings() {
-    const panel = document.getElementById("settingsPanel");
-    if (panel) {
-        panel.style.display = "none";
-    }
+    document.getElementById("settingsPanel").style.display = "none";
 }
 
 function changeTheme(themeName) {
     document.body.classList.remove('theme1','theme2','theme3','theme4','theme5');
     document.body.classList.add(themeName);
-    localStorage.setItem("selectedTheme", themeName);
 }
 
 // ======= Krallık ismi =======
-const kingdomNameSpan = document.getElementById("kingdom-name");
+let kingdomNameSpan = document.getElementById("kingdom-name");
 const kingdomInput = document.getElementById("kingdom-input");
 const setKingdomBtn = document.getElementById("set-kingdom");
 
+// Varsayılan isim
 let kingdomName = localStorage.getItem("kingdomName") || "My Kingdom";
-if (kingdomNameSpan) {
-    kingdomNameSpan.textContent = kingdomName;
-}
+kingdomNameSpan.textContent = kingdomName;
 
-if (setKingdomBtn) {
-    setKingdomBtn.addEventListener("click", () => {
-        if (!kingdomInput) return;
-        
-        const name = kingdomInput.value.trim();
-        if(name !== ""){
-            kingdomName = name;
-            if (kingdomNameSpan) {
-                kingdomNameSpan.textContent = kingdomName;
-            }
-            saveGame();
-            kingdomInput.value = "";
-        }
-    });
-}
+// İsim değiştirme
+setKingdomBtn.addEventListener("click", () => {
+    const name = kingdomInput.value.trim();
+    if(name !== ""){
+        kingdomName = name;
+        kingdomNameSpan.textContent = kingdomName;
+        saveGame();
+        kingdomInput.value = "";
+    }
+});
 
 // ======= Game verilerini kaydet =======
 function saveGame(){
-    try {
-        localStorage.setItem("playerGems", gemCount.toString());
-        localStorage.setItem("clickPower", clickPower.toString());
-        localStorage.setItem("clickerLevel", clickerLevel.toString());
-        localStorage.setItem("autoMinerLevel", autoMinerLevel.toString());
-        localStorage.setItem("autoMinerPower", autoMinerPower.toString());
-        localStorage.setItem("superClickerLevel", superClickerLevel.toString());
-        localStorage.setItem("myArmy", myArmy.toString());
-        localStorage.setItem("kingdomName", kingdomName);
-        
-        // Broadcast to other tabs
-        broadcastState();
-    } catch (e) {
-        console.error("Could not save game:", e);
-    }
+    localStorage.setItem("playerGems", gemCount);
+    localStorage.setItem("clickPower", clickPower);
+    localStorage.setItem("clickerLevel", clickerLevel);
+    localStorage.setItem("autoMinerLevel", autoMinerLevel);
+    localStorage.setItem("autoMinerPower", autoMinerPower);
+    localStorage.setItem("superClickerLevel", superClickerLevel);
+    localStorage.setItem("myArmy", myArmy);
+    localStorage.setItem("kingdomName", kingdomName);
 }
 
 // ======= Sayfa yüklenince verileri göster =======
 window.addEventListener("load", () => {
-    // Load saved theme
-    const savedTheme = localStorage.getItem("selectedTheme");
-    if (savedTheme) {
-        changeTheme(savedTheme);
-    }
+    gemDisplay.textContent = gemCount;
+    document.getElementById("myArmy").textContent = myArmy;
     
-    updateUI();
+    upgrades.forEach(upgrade => {
+        const type = upgrade.dataset.type;
+        const levelSpan = upgrade.querySelector(".upgrade-level");
+        if(type === "clicker") levelSpan.textContent = clickerLevel;
+        if(type === "auto") levelSpan.textContent = autoMinerLevel;
+        if(type === "super-clicker") levelSpan.textContent = superClickerLevel;
+    });
 
     for(let i=0;i<autoMinerLevel;i++){
         addMinerVisual();
     }
-    
-    // Initial save to ensure data is stored
-    saveGame();
 });
